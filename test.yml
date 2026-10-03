@@ -1,6 +1,6 @@
 ---
 - name: AWX Linux Server Test
-  hosts: all
+  hosts: terraform
   become: true
 
   tasks:
