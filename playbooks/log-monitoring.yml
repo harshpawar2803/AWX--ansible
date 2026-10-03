@@ -1,0 +1,41 @@
+---
+- name: Linux Log Monitoring
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check recent system errors
+      ansible.builtin.command: journalctl -p err -n 20 --no-pager
+      register: system_errors
+      changed_when: false
+
+    - name: Check failed systemd services
+      ansible.builtin.command: systemctl --failed --no-legend
+      register: failed_services
+      changed_when: false
+
+    - name: Check recent SSH errors
+      ansible.builtin.shell: |
+        journalctl -u sshd -p err -n 10 --no-pager
+      register: ssh_errors
+      changed_when: false
+
+    - name: Check recent Apache errors
+      ansible.builtin.shell: |
+        journalctl -u httpd -p err -n 10 --no-pager
+      register: apache_errors
+      changed_when: false
+
+    - name: Display log monitoring report
+      ansible.builtin.debug:
+        msg:
+          - "===== LINUX LOG MONITORING REPORT ====="
+          - "FAILED SYSTEMD SERVICES:"
+          - "{{ failed_services.stdout | default('None') }}"
+          - "RECENT SYSTEM ERRORS:"
+          - "{{ system_errors.stdout | default('None') }}"
+          - "RECENT SSH ERRORS:"
+          - "{{ ssh_errors.stdout | default('None') }}"
+          - "RECENT APACHE ERRORS:"
+          - "{{ apache_errors.stdout | default('None') }}"
