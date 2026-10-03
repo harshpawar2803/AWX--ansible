@@ -1,0 +1,39 @@
+---
+- name: Linux DNS Health Check
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check hostname
+      ansible.builtin.command: hostname
+      register: hostname_output
+      changed_when: false
+
+    - name: Check DNS configuration
+      ansible.builtin.command: cat /etc/resolv.conf
+      register: resolv_output
+      changed_when: false
+
+    - name: Check DNS resolution
+      ansible.builtin.command: getent hosts google.com
+      register: dns_resolution
+      changed_when: false
+
+    - name: Check DNS service configuration
+      ansible.builtin.command: resolvectl status
+      register: resolvectl_output
+      changed_when: false
+      failed_when: false
+
+    - name: Display DNS health report
+      ansible.builtin.debug:
+        msg:
+          - "===== DNS HEALTH REPORT ====="
+          - "Hostname: {{ hostname_output.stdout }}"
+          - "DNS Configuration:"
+          - "{{ resolv_output.stdout }}"
+          - "DNS Resolution:"
+          - "{{ dns_resolution.stdout }}"
+          - "Resolver Status:"
+          - "{{ resolvectl_output.stdout }}"
