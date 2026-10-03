@@ -1,0 +1,38 @@
+---
+- name: Web Server Health Check
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check Apache service
+      ansible.builtin.systemd:
+        name: httpd
+      register: apache_status
+
+    - name: Check Apache configuration
+      ansible.builtin.command: httpd -t
+      register: apache_config
+      changed_when: false
+
+    - name: Check HTTP port 80
+      ansible.builtin.command: ss -lntp
+      register: port_status
+      changed_when: false
+
+    - name: Check HTTP response
+      ansible.builtin.uri:
+        url: http://localhost
+        status_code: 200
+      register: http_response
+
+    - name: Display web server report
+      ansible.builtin.debug:
+        msg:
+          - "===== WEB SERVER HEALTH REPORT ====="
+          - "Apache Status: {{ apache_status.status.ActiveState }}"
+          - "Apache Enabled: {{ apache_status.status.UnitFileState }}"
+          - "Apache Config: {{ apache_config.stdout }}"
+          - "HTTP Response Code: {{ http_response.status }}"
+          - "Port 80 Listening:"
+          - "{{ port_status.stdout }}"
