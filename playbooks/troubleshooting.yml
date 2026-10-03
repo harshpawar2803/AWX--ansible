@@ -1,0 +1,45 @@
+---
+- name: Linux Server Troubleshooting
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check disk usage
+      ansible.builtin.command: df -h
+      register: disk_output
+      changed_when: false
+
+    - name: Check memory usage
+      ansible.builtin.command: free -h
+      register: memory_output
+      changed_when: false
+
+    - name: Check failed systemd services
+      ansible.builtin.command: systemctl --failed --no-legend
+      register: failed_services
+      changed_when: false
+
+    - name: Check SSH service
+      ansible.builtin.systemd:
+        name: sshd
+      register: ssh_status
+
+    - name: Check recent system errors
+      ansible.builtin.command: journalctl -p err -n 10 --no-pager
+      register: system_errors
+      changed_when: false
+
+    - name: Display troubleshooting report
+      ansible.builtin.debug:
+        msg:
+          - "===== LINUX TROUBLESHOOTING REPORT ====="
+          - "DISK USAGE:"
+          - "{{ disk_output.stdout }}"
+          - "MEMORY USAGE:"
+          - "{{ memory_output.stdout }}"
+          - "FAILED SERVICES:"
+          - "{{ failed_services.stdout | default('None') }}"
+          - "SSH STATUS: {{ ssh_status.status.ActiveState }}"
+          - "RECENT SYSTEM ERRORS:"
+          - "{{ system_errors.stdout | default('No recent errors') }}"
