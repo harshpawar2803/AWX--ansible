@@ -1,0 +1,36 @@
+---
+- name: SSL TLS Health Check
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check HTTPS response
+      ansible.builtin.uri:
+        url: https://localhost
+        method: GET
+        status_code: 200
+        validate_certs: false
+      register: https_response
+
+    - name: Check SSL certificate
+      ansible.builtin.shell: |
+        openssl s_client -connect localhost:443 </dev/null 2>/dev/null |
+        openssl x509 -noout -subject -issuer -dates
+      register: certificate_info
+      changed_when: false
+
+    - name: Check HTTPS port
+      ansible.builtin.command: ss -lntp
+      register: https_port
+      changed_when: false
+
+    - name: Display SSL TLS report
+      ansible.builtin.debug:
+        msg:
+          - "===== SSL/TLS HEALTH REPORT ====="
+          - "HTTPS Response Code: {{ https_response.status }}"
+          - "Certificate Information:"
+          - "{{ certificate_info.stdout }}"
+          - "HTTPS Port 443:"
+          - "{{ https_port.stdout }}"
