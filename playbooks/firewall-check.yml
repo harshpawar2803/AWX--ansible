@@ -1,0 +1,31 @@
+---
+- name: Linux Firewall Health Check
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check firewall status
+      ansible.builtin.command: firewall-cmd --state
+      register: firewall_status
+      changed_when: false
+
+    - name: Check active firewall zones
+      ansible.builtin.command: firewall-cmd --get-active-zones
+      register: active_zones
+      changed_when: false
+
+    - name: Check firewall configuration
+      ansible.builtin.command: firewall-cmd --list-all
+      register: firewall_config
+      changed_when: false
+
+    - name: Display firewall health report
+      ansible.builtin.debug:
+        msg:
+          - "===== FIREWALL HEALTH REPORT ====="
+          - "Firewall Status: {{ firewall_status.stdout }}"
+          - "Active Zones:"
+          - "{{ active_zones.stdout }}"
+          - "Firewall Configuration:"
+          - "{{ firewall_config.stdout }}"
