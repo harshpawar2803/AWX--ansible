@@ -1,0 +1,25 @@
+---
+- name: Linux Service Management
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Ensure SSH service is running
+      ansible.builtin.systemd:
+        name: sshd
+        state: started
+        enabled: true
+
+    - name: Check SSH service status
+      ansible.builtin.systemd:
+        name: sshd
+      register: ssh_status
+
+    - name: Display SSH service status
+      ansible.builtin.debug:
+        msg:
+          - "===== SERVICE MANAGEMENT REPORT ====="
+          - "Service: sshd"
+          - "Status: {{ ssh_status.status.ActiveState }}"
+          - "Enabled: {{ ssh_status.status.UnitFileState }}"
