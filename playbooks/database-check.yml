@@ -1,0 +1,39 @@
+---
+- name: MariaDB Health Check
+  hosts: terraform
+  become: true
+
+  tasks:
+
+    - name: Check MariaDB service
+      ansible.builtin.systemd:
+        name: mariadb
+      register: mariadb_status
+
+    - name: Check MariaDB port
+      ansible.builtin.command: ss -lntp
+      register: mariadb_port
+      changed_when: false
+
+    - name: Check MariaDB version
+      ansible.builtin.command: mariadb -u root -e "SELECT VERSION();"
+      register: mariadb_version
+      changed_when: false
+
+    - name: Test database connectivity
+      ansible.builtin.command: mariadb -u root -e "SELECT 1;"
+      register: database_test
+      changed_when: false
+
+    - name: Display database health report
+      ansible.builtin.debug:
+        msg:
+          - "===== MARIADB HEALTH REPORT ====="
+          - "MariaDB Status: {{ mariadb_status.status.ActiveState }}"
+          - "MariaDB Enabled: {{ mariadb_status.status.UnitFileState }}"
+          - "MariaDB Version:"
+          - "{{ mariadb_version.stdout }}"
+          - "Database Connectivity:"
+          - "{{ database_test.stdout }}"
+          - "Port 3306:"
+          - "{{ mariadb_port.stdout }}"
